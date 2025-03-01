@@ -1,9 +1,9 @@
-// This work is licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International  
-// https://creativecommons.org/licenses/by-nc-sa/4.0/
-// © BigBeluga
+// Triple Trend
+// xCoreng ABrandaol
+//
 
 //@version=6
-indicator('Triple Trend Indicator [ABrandaoL]', overlay = true, max_labels_count = 500)
+indicator('Triple Trend [ABrandaoL]', overlay = true, max_labels_count = 500)
 
 // ＩＮＰＵＴＳ ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――{
 int len = input.int(70, 'Length', minval = 20, group = 'Bands')
@@ -18,7 +18,6 @@ bool bar_col = input.bool(false, 'Bars Color')
 
 
 // ＣＡＬＣＵＬＡＴＩＯＮＳ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――{
-
 ma = switch option_ma
     'wma' => ta.wma(close, len)
     'sma' => ta.sma(close, len)
@@ -37,9 +36,16 @@ trend(src) =>
     if ta.crossover(close, upper)
         trend := true
         trend
+        alert("Cross Under Up;" + str.tostring(close) +  ";" + str.tostring(time))
     if ta.crossunder(close, lower)
         trend := false
         trend
+        alert("Cross Under Down;" + str.tostring(close) +  ";" + str.tostring(time))
+
+    bool crossUpper = ta.crossover(close, upper)
+    bool crossLower = ta.crossover(close, lower)
+
+        
 
     switch 
         trend => 
@@ -47,17 +53,22 @@ trend(src) =>
     	    band2 := lower + atr * 1.5
     	    band3 := lower + atr * 3
     	    band3
+            alert("Trend Down;" + str.tostring(close) +  ";" + str.tostring(time))
+            
         not trend => 
     	    band1 := upper
     	    band2 := upper - atr * 1.5
     	    band3 := upper - atr * 3
     	    band3
-
+            alert("Trend Up;" + str.tostring(close) +  ";" + str.tostring(time))
+            
     [band1, band2, band3, trend, atr]
 
 [band1, band2, band3, trend, atr] = trend(ma)
 
 trend_chage = trend != trend[1]
+
+
 
 // Triple signals
 signal(txt, band) =>
@@ -66,6 +77,7 @@ signal(txt, band) =>
 
     if ta.crossunder(high, band) and count1 == 0 and not trend and not trend_chage //and band < band[2]
         label.new(bar_index - 1, high[1], txt, style = label.style_label_down, color = color.new(col2, 25), textcolor = chart.fg_color, size = size.small)
+        alert("Sell")
         count1 := 1
         count1
 
@@ -77,6 +89,7 @@ signal(txt, band) =>
 
     if ta.crossover(low, band) and trend and not trend_chage and count2 == 0
         label.new(bar_index - 1, low[1], txt, style = label.style_label_up, color = color.new(col1, 25), textcolor = chart.fg_color, size = size.small)
+        alert("Buy")
         count2 := 1
         count2
 
@@ -99,13 +112,13 @@ switch option_signal
 
 // ＰＬＯＴ ――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――{
 color t_color = trend_chage ? color(na) : close > band1 ? col1 : col2
-p1 = plot(band1, color = trend_chage ? color(na) : close > band1 ? col1 : col2, title = 'THMA', linewidth = 3)
-p2 = plot(band2, color = trend_chage ? color(na) : close > band1 ? color.new(col1, 25) : color.new(col2, 25), title = 'THMA', linewidth = 2)
-p3 = plot(band3, color = trend_chage ? color(na) : close > band1 ? color.new(col1, 50) : color.new(col2, 50), title = 'THMA', linewidth = 1)
+p1 = plot(band1, color = trend_chage ? color(na) : close > band1 ? col1 : col2, title = 'THMA.3', linewidth = 3)
+p2 = plot(band2, color = trend_chage ? color(na) : close > band1 ? color.new(col1, 25) : color.new(col2, 25), title = 'THMA.2', linewidth = 2)
+p3 = plot(band3, color = trend_chage ? color(na) : close > band1 ? color.new(col1, 50) : color.new(col2, 50), title = 'THMA.1', linewidth = 1)
 
 if trend_chage
     line.new(bar_index - 1, band3 + atr * 5, bar_index - 1, band3 - atr * 5, color = color.new(close > band1 ? col1 : col2, 0), style = line.style_dashed)
-
+    alert("Trend Changed;" + str.tostring(close) +  ";" + str.tostring(time))
 // fill(p1, p3, band1, band3 + (trend ? atr : -atr), color.new(t_color, 80), na)
 barcolor(bar_col ? t_color : na)
 
